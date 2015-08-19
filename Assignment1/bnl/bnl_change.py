@@ -1,6 +1,5 @@
 import bisect
 import os
-
 #reports dominance of obj1 over obj2 in dims
 def dominating(obj1, obj2, dims):
 	flag = False
@@ -42,13 +41,14 @@ def writeObjectOutput(tempfile, obj):
 		tempfile.write('\t')
 	tempfile.write('\n')
 
-def outputObjBeforeTimestamp(outfile, memoryObj, obj, timestamp):
-	for item in memoryObj[:]:
+def outputObjBeforeTimestamp(outfile, memoryObj, timestamp):
+	copy = memoryObj
+	for item in copy:
 		if timestamp > item[0]:
 			writeObjectOutput(outfile, item[1])
 			memoryObj.remove(item)
 		else:
-			return memoryObj
+			break
 
 	return memoryObj
 def flushMemoryToOutput(outfile, memoryObj):
@@ -89,26 +89,20 @@ def bnl(infilename, outfilename, dims, blocksize):
 		tempcount += 1
 		inputfile = open('temp'+str(tempcount-1)+'.txt', 'r')
 		tempfile = open('temp'+str(tempcount)+'.txt', 'w')
-		firstTimeInFile = True
-		# print memoryObj
 		for line in inputfile:
 			line = line.rstrip()
 			arr = line.split('\t')
 			arr = map(int, arr)
 			obj = arr[1:] 
-			timestamp = arr[0]
-			if firstTimeInFile:
-				memoryObj = outputObjBeforeTimestamp(outfile, memoryObj, obj, timestamp)
-				firstTimeInFile = False
+			memoryObj = outputObjBeforeTimestamp(outfile, memoryObj, arr[0])
+			timestamp += 1
 			flag = dominatingInMemory(memoryObj, obj, timestamp, dims, blocksize)
 			if flag == 0:
 				elementsInTempfile += 1
 				writeTupleToFile(tempfile, (timestamp, obj))
 		inputfile.close()
 		tempfile.close()
-		if elementsInTempfile == preelementsInTempfile :
-			flushMemoryToOutput(outfile, memoryObj)
-			memoryObj = []
+
 
 		os.remove('temp'+str(tempcount-1)+'.txt')
 	os.remove('temp'+str(tempcount)+'.txt')
@@ -131,5 +125,5 @@ if __name__ == '__main__':
 	#get dimension on which skylines are to be found and memory blocksize 	
 	dims, blocksize = getBlockParametersDimension(queryfile, dims, blocksize)
 	infilename = 'genfile2.txt'
-	outfilename = 'outfile2.txt'
+	outfilename = 'outfile4.txt'
 	bnl(infilename, outfilename, dims, blocksize)
