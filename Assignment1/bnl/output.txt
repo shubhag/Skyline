@@ -1,0 +1,5 @@
+Total running time: 0.000323057174683 sec
+Comparisons: 4
+Size of skyline set: 2
+Ids of the skyline objects: 
+[2, 4]

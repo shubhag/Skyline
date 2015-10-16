@@ -1,0 +1,83 @@
+function hideExerciseTabs() {
+	if(document.getElementById('instructions') != null)
+    		document.getElementById('instructions').style.display='none';
+    if(document.getElementById('description') != null)
+    		document.getElementById('description').style.display='none';    
+    /*
+    if(document.getElementById('exerciseApplet') != null) {
+    		document.getElementById('exerciseApplet').setAttribute('width','900');
+    		document.exerciseApplet.setSize(900,650);
+    }
+    */
+    document.getElementById('hideLink').style.display='none';  
+    document.getElementById('showLink').style.display='inline';
+    return false; 
+}
+
+function showExerciseTabs() {
+    	if(document.getElementById('instructions') != null)
+    		document.getElementById('instructions').style.display='block';
+    if(document.getElementById('description') != null)
+    		document.getElementById('description').style.display='block';    
+    /*
+    if(document.getElementById('exerciseApplet') != null) {
+    		document.getElementById('exerciseApplet').setAttribute('width','700');;
+    		document.exerciseApplet.setSize(700,650);
+	}
+	*/
+    document.getElementById('hideLink').style.display='inline';  
+    document.getElementById('showLink').style.display='none';
+    return false; 
+}
+
+function showCodeTabs() {   
+    if(document.getElementById('code') != null)
+    		document.getElementById('code').style.display='block';
+    if(document.getElementById('code-td') != null)
+    		document.getElementById('code-td').setAttribute('width','*');
+
+    document.getElementById('hideCodeLink').style.display='inline';
+    document.getElementById('showCodeLink').style.display='none';  
+    return false; 
+}
+
+function hideCodeTabs() {   
+    if(document.getElementById('code') != null)
+    		document.getElementById('code').style.display='none';
+    if(document.getElementById('code-td') != null)
+    		document.getElementById('code-td').setAttribute('width','1');
+
+    document.getElementById('hideCodeLink').style.display='none';
+    document.getElementById('showCodeLink').style.display='inline';  
+    return false; 
+}
+
+
+function getParentOfType(element, type) {
+	while(element.parentNode != null && element.parentNode.tagName.toUpperCase() != type.toUpperCase()) {
+		//alert('parentNode.tagName: ' + element.parentNode.tagName);
+		element = element.parentNode;
+	}
+	if(element.parentNode == null)
+		return null;
+	return element.parentNode;
+}
+
+function showTab(tabElement, tabName) {
+	//alert("TabName= " + tabName);
+	tabRoot = getParentOfType(tabElement, 'ul');
+	tabs = tabRoot.childNodes;
+	for (var i = 0; i < tabs.length; i++) {
+		tabs[i].className='';
+	}
+	getParentOfType(tabElement, 'li').className='current';
+	textTabsRoot = getParentOfType(document.getElementById(tabName.toLowerCase() + '-text'), 'div');
+	//alert(textTabsRoot.tagName + " " + textTabsRoot.className + " " + textTabsRoot.childNodes.length);
+	textTabs = textTabsRoot.childNodes;
+		for (var j = 0; j < textTabs.length; j++) {
+		//alert('looping: ' + textTabs[j].tagName + ' j: ' + j);
+		if(textTabs[j].tagName=='DIV')
+			textTabs[j].style.display='none';
+	}
+	document.getElementById(tabName.toLowerCase() + '-text').style.display='block';
+}

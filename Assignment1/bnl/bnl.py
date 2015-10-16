@@ -1,9 +1,14 @@
 import bisect
 import os
+import time
 
+comparisons = 0
+id_list = []
 #reports dominance of obj1 over obj2 in dims
 def dominating(obj1, obj2, dims):
+	global comparisons
 	flag = False
+	comparisons += 1
 	for index in dims:
 		if obj1[index] < obj2[index]:
 			flag = True
@@ -42,28 +47,26 @@ def writeObjectOutput(tempfile, obj):
 		tempfile.write('\t')
 	tempfile.write('\n')
 
-def outputObjBeforeTimestamp(outfile, memoryObj, obj, timestamp):
-	for item in memoryObj[:]:
+def outputObjBeforeTimestamp(memoryObj, timestamp):
+	global id_list
+	copy = memoryObj
+	for item in copy:
 		if timestamp > item[0]:
-			writeObjectOutput(outfile, item[1])
+			id_list.append(item[1][0])
 			memoryObj.remove(item)
 		else:
-			return memoryObj
+			break
 
 	return memoryObj
-def flushMemoryToOutput(outfile, memoryObj):
+def flushMemoryToOutput(memoryObj):
+	global id_list
 	for obj in memoryObj:
-		for item in obj[1]:
-			outfile.write(str(item))
-			outfile.write('\t')
-		outfile.write('\n')
+		id_list.append(obj[1][0])
 
-
-def bnl(infilename, outfilename, dims, blocksize):
+def bnl(infilename, dims, blocksize):
 	tempcount = 0
 	inputfile = open(infilename, 'r')
 	tempfile = open('temp'+str(tempcount)+'.txt', 'w')
-	outfile = open(outfilename, 'w')
 	#apply first pass, only blocksize will remain in memory. if others can be skyline they will be placed in tempfile
 	timestamp = 1
 	elementsInTempfile = 0
@@ -72,7 +75,7 @@ def bnl(infilename, outfilename, dims, blocksize):
 		line = line.rstrip().lstrip()
 		obj = line.split('\t')
 		#converts string list to int list
-		obj = map(int, obj)		
+		obj = map(float, obj)		
 		#return 1 if it dominates some obj in memory, -1 if dominated by some object and 0 if not dominated by anyone(this can still be skyline)
 		flag = dominatingInMemory(memoryObj, obj, timestamp, dims, blocksize)
 		if flag == 0:
@@ -89,30 +92,25 @@ def bnl(infilename, outfilename, dims, blocksize):
 		tempcount += 1
 		inputfile = open('temp'+str(tempcount-1)+'.txt', 'r')
 		tempfile = open('temp'+str(tempcount)+'.txt', 'w')
-		firstTimeInFile = True
-		# print memoryObj
 		for line in inputfile:
 			line = line.rstrip()
 			arr = line.split('\t')
-			arr = map(int, arr)
+			# arr = map(int, arr)
 			obj = arr[1:] 
-			timestamp = arr[0]
-			if firstTimeInFile:
-				memoryObj = outputObjBeforeTimestamp(outfile, memoryObj, obj, timestamp)
-				firstTimeInFile = False
+			obj = map(float, obj)
+			memoryObj = outputObjBeforeTimestamp(memoryObj, int (arr[0]))
+			timestamp += 1
 			flag = dominatingInMemory(memoryObj, obj, timestamp, dims, blocksize)
 			if flag == 0:
 				elementsInTempfile += 1
 				writeTupleToFile(tempfile, (timestamp, obj))
 		inputfile.close()
 		tempfile.close()
-		if elementsInTempfile == preelementsInTempfile :
-			flushMemoryToOutput(outfile, memoryObj)
-			memoryObj = []
+
 
 		os.remove('temp'+str(tempcount-1)+'.txt')
 	os.remove('temp'+str(tempcount)+'.txt')
-	flushMemoryToOutput(outfile, memoryObj)
+	flushMemoryToOutput(memoryObj)
 
 def getBlockParametersDimension(queryfile, dims, blocksize):
 	query = open(queryfile, 'r')
@@ -125,11 +123,25 @@ def getBlockParametersDimension(queryfile, dims, blocksize):
 	return dims, blocksize
 
 if __name__ == '__main__':
+	start_time = time.time()
 	dims = []
 	blocksize  = 0
-	queryfile = 'genfile1.txt'
+	queryfile = 'sample_query.txt'
 	#get dimension on which skylines are to be found and memory blocksize 	
 	dims, blocksize = getBlockParametersDimension(queryfile, dims, blocksize)
-	infilename = 'genfile2.txt'
-	outfilename = 'outfile2.txt'
-	bnl(infilename, outfilename, dims, blocksize)
+	infilename = 'sample_ind.txt'
+	outfilename = 'output_ind.txt'
+	bnl(infilename, dims, blocksize)
+	end_time = time.time()
+
+	#print results
+	outfile = open(outfilename, 'w')
+	outfile.write("Total running time: "+ str(end_time - start_time) + " sec\n")
+	outfile.write("Comparisons: "+ str(comparisons)+"\n")
+	outfile.write("Size of skyline set: "+str(len(id_list)) + "\n")
+	outfile.write("Ids of the skyline objects: \n")
+
+	id_list = map(int, id_list)
+	outfile.write(str(id_list))
+	outfile.write("\n")
+	outfile.close()
