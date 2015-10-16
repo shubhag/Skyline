@@ -1,19 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from Queue import PriorityQueue
+import heapq
 
-class MyPriorityQueue(PriorityQueue):
+class PriorityQueue:
     def __init__(self):
-        PriorityQueue.__init__(self)
-        self.counter = 0
+        self._queue = []
+        self._index = 0
 
-    def put(self, item, priority):
-        PriorityQueue.put(self, (priority, self.counter, item))
-        self.counter += 1
+    def push(self, item, priority):
+        heapq.heappush(self._queue, (priority, self._index, item))
+        self._index += 1
 
-    def get(self, *args, **kwargs):
-        _, _, item = PriorityQueue.get(self, *args, **kwargs)
-        return item
+    def pop(self):
+        return heapq.heappop(self._queue)
+
+    def empty(self):
+        return len(self._queue)
+
 
 class node(object):
     def __init__(self, MBR = None, level = 0, index = None, father = None):
@@ -138,7 +141,6 @@ class Rtree(object):
             if len(p.leaves) > p.M:
                 p.SplitNode()
             else:
-                
                 if p.father != None:
                     p.father.MBR = merge(p.father.MBR, p.MBR)
             p = p.father
@@ -178,8 +180,27 @@ class Rtree(object):
 
 
     def findSkylinesStart(self):
-        
+        queue = PriorityQueue()
+        skyline = []
+        for leaf in self.leaves:
+            queue.push(leaf,indexingValue(leaf.MBR))
 
+        while queue.empty() != 0:
+            obj = queue.pop()
+            print obj
+            if obj[2].level > 0 :
+                for leaf in obj[2].leaves:
+                    queue.push(leaf,indexingValue(leaf.MBR))
+            else :
+                #check if a leaf is a skyline from the current skyline set               
+                pass
+
+def indexingValue(MBR):
+    d = len(MBR)/2
+    indexValue = 0
+    for i in range(0, d):
+        indexValue = indexValue + MBR[i]
+    return indexValue
 
 def Insert(root, node):
     target = root.ChooseLeaf(node)

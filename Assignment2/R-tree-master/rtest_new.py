@@ -20,17 +20,17 @@ dim = 2
 root = Rtree(m = 3, M = 7)
 n = []
 
-for i in range(100000):
-	data = []
+for i in range(100):
+	data = {}
 	for j in range(0, dim):
-		a = uniform(-1000, 1000)
+		a = uniform(0, 1000)
 		data[j] = a
-		data[j+dim] = a + 0.01
-	print data
+		data[j+dim] = a
+	# print data
 	n.append(node(MBR = data, index = i))
 t0 = time()
 
-for i in range(100000):
+for i in range(100):
     root = Insert(root, n[i])
 # t1 = time()
 
@@ -42,5 +42,4 @@ for i in range(100000):
 # print 'Searching ...'
 # print t2 - t1
 
-
-priorityQ = []
+root.findSkylinesStart()
