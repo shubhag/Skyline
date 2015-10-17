@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import heapq
+comparisons = 0
 class PriorityQueue:
 	def __init__(self):
 		self._queue = []
@@ -15,7 +16,6 @@ class PriorityQueue:
 
 	def empty(self):
 		return len(self._queue)
-
 
 class node(object):
 	def __init__(self, MBR = None, level = 0, index = None, father = None):
@@ -174,6 +174,7 @@ class Rtree(object):
 
 	def findSkylinesStart(self, dims):
 		queue = PriorityQueue()
+		global comparisons
 		skyline = []
 		for leaf in self.leaves:
 			queue.push(leaf,indexingValue(leaf.MBR))
@@ -186,7 +187,7 @@ class Rtree(object):
 						queue.push(leaf,indexingValue(leaf.MBR))
 				else :
 					skyline.append((obj.index, obj.MBR))
-		return skyline             
+		return skyline, comparisons             
 
 def indexingValue(MBR):
 	d = len(MBR)/2
@@ -262,7 +263,9 @@ def getSpace(MBR):
 	return space
 
 def notDominated(skylineSet, MBR, dims):
+	global comparisons
 	for skyline in skylineSet:
+		comparisons += 1
 		if dominating(skyline[1], MBR, dims):
 			return False
 	return True

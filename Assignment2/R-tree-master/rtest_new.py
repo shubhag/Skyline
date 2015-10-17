@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from rtree_new import *
 from random import uniform
-from time import time
+import time
 
 def getBlockParametersDimension(queryfile, dims, blocksize):
 	query = open(queryfile, 'r')
@@ -15,6 +15,7 @@ def getBlockParametersDimension(queryfile, dims, blocksize):
 	return dims, blocksize
 
 if __name__ == '__main__':
+	startTime = time.time()
 	data = {}
 
 	#get dimension on which skylines are to be found and memory blocksize 	
@@ -25,7 +26,8 @@ if __name__ == '__main__':
 	root = Rtree(m = blocksize/2, M = blocksize)
 
 	#get input file of objects
-	infilename = 'sample_ant.txt'
+	infilename = 'sample_ind.txt'
+	outfilename = 'output_ind.txt'
 	inputfile = open(infilename, 'r')
 	n = []
 	for line in inputfile:
@@ -40,14 +42,26 @@ if __name__ == '__main__':
 			data[j] = obj[j]
 			data[j+d] = obj[j]
 		n.append(node(MBR = data, index = index))
+	inputfile.close()
 
 	for i in range(0, len(n)):
 		root = Insert(root, n[i])
 
-	skylines = root.findSkylinesStart(dims)
+	comparisons = 0
+	skylines, comparisons = root.findSkylinesStart(dims)
 
 	skyIndex = []
 	for obj in skylines:
 		skyIndex.append(obj[0])
-	sorted(skyIndex)
-	print skyIndex
+	skyIndex = sorted(skyIndex)
+	endTime = time.time()
+
+	#print results
+	outfile = open(outfilename, 'w')
+	outfile.write("Total running time: "+ str(endTime - startTime) + " sec\n")
+	outfile.write("Comparisons: "+ str(comparisons)+"\n")
+	outfile.write("Size of skyline set: "+str(len(skyIndex)) + "\n")
+	outfile.write("Ids of the skyline objects: \n")
+	outfile.write(str(skyIndex))
+	outfile.write("\n")
+	outfile.close()
