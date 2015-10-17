@@ -17,28 +17,37 @@ def getBlockParametersDimension(queryfile, dims, blocksize):
 if __name__ == '__main__':
 	data = {}
 
-	queryfile = 'sample1.txt'
 	#get dimension on which skylines are to be found and memory blocksize 	
+	queryfile = 'sample_query.txt'
+	dims = []
+	blocksize  = 0
 	dims, blocksize = getBlockParametersDimension(queryfile, dims, blocksize)
+	root = Rtree(m = blocksize/2, M = blocksize)
 
-	inputfile = 'sample_ant.txt'
-	
-	
-	dim = 2
-	root = Rtree(m = 3, M = 7)
+	#get input file of objects
+	infilename = 'sample_ant.txt'
+	inputfile = open(infilename, 'r')
 	n = []
-
-	for i in range(100):
+	for line in inputfile:
+		line = line.rstrip().lstrip()
+		words = line.split('\t')
+		obj = words[1:]
+		obj = map(float, obj)		#converts string list to int list
+		index = int (words[0])
 		data = {}
-		for j in range(0, dim):
-			a = uniform(0, 1000)
-			data[j] = a
-			data[j+dim] = a
-		n.append(node(MBR = data, index = i))
-	t0 = time()
+		d = len(obj)
+		for j in range(0, d):
+			data[j] = obj[j]
+			data[j+d] = obj[j]
+		n.append(node(MBR = data, index = index))
 
-	for i in range(100):
+	for i in range(0, len(n)):
 		root = Insert(root, n[i])
 
+	skylines = root.findSkylinesStart(dims)
 
-	print root.findSkylinesStart([1, 2])
+	skyIndex = []
+	for obj in skylines:
+		skyIndex.append(obj[0])
+	sorted(skyIndex)
+	print skyIndex
