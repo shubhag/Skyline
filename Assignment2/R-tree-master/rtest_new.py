@@ -3,43 +3,42 @@
 from rtree_new import *
 from random import uniform
 from time import time
-import heapq
-data = {}
 
-dim = 2
-# for i in range(100000):
-#     # x = uniform(-1000, 1000)
-#     # y = uniform(-1000, 1000)
-#     # data[i] = [None]*(2*dim)
-#     for j in range(0, dim):
-#     	a = uniform(-1000, 1000)
-#     	data[i][j] = a
-#     	data[i][j+dim] = a + 0.01 
-#     # data[i] = {'xmin':x, 'xmax':x + 0.01, 'ymin':y, 'ymax':y + 0.01}
+def getBlockParametersDimension(queryfile, dims, blocksize):
+	query = open(queryfile, 'r')
+	line1 = query.readline().rstrip()
+	dims = line1.split('\t')
+	dims = map(int, dims)
+	line2 = query.readline().rstrip()
+	blocksize = int (line2)
+	query.close()
+	return dims, blocksize
 
-root = Rtree(m = 3, M = 7)
-n = []
-
-for i in range(100):
+if __name__ == '__main__':
 	data = {}
-	for j in range(0, dim):
-		a = uniform(0, 1000)
-		data[j] = a
-		data[j+dim] = a
-	# print data
-	n.append(node(MBR = data, index = i))
-t0 = time()
 
-for i in range(100):
-    root = Insert(root, n[i])
-# t1 = time()
+	queryfile = 'sample1.txt'
+	#get dimension on which skylines are to be found and memory blocksize 	
+	dims, blocksize = getBlockParametersDimension(queryfile, dims, blocksize)
 
-# print 'Inserting ...'
-# print t1 - t0
+	inputfile = 'sample_ant.txt'
+	
+	
+	dim = 2
+	root = Rtree(m = 3, M = 7)
+	n = []
 
-# x = root.Search(merge(n[0].MBR, n[1].MBR))
-# t2 = time()
-# print 'Searching ...'
-# print t2 - t1
+	for i in range(100):
+		data = {}
+		for j in range(0, dim):
+			a = uniform(0, 1000)
+			data[j] = a
+			data[j+dim] = a
+		n.append(node(MBR = data, index = i))
+	t0 = time()
 
-root.findSkylinesStart()
+	for i in range(100):
+		root = Insert(root, n[i])
+
+
+	print root.findSkylinesStart([1, 2])
