@@ -3,30 +3,13 @@
 import heapq
 from random import uniform
 import time
-
-#check intersecting rectangles
-#return 0 if it is not intersecting
-#else it will return 1
-def intersect(MBRa, MBRb):
-	dimension = len(MBRa)/2
-	
-	#if its ith dimension value is greater than the maximum ith dimension value of MBR
-	for i in range(0, dimension):
-		if MBRa[i] > MBRb[i+d]:
-			return 0
-
-	for i in range(0,dimension):
-		if MBRa[i+d] < MBRb[i]:
-			return 0
-
-	return 1
+import math
 
 def contain(MBR1, MBR2):
 	d = len(MBR1)/2
 	for i in range(0,d):
 		if MBR1[i] > MBR2[i]:
 			return 0
-
 	for i in range(0,d):
 		if MBR1[i+d] < MBR2[i+d]:
 			return 0
@@ -95,11 +78,12 @@ def getSpace(MBR):
 		space = space * (MBR[i+d] - MBR[i])
 	return space
 
-def indexingValue(MBR):
-	d = len(MBR)/2
+def indexingValue(MBR, dims):
+	# d = len(MBR)/2
 	indexValue = 0
-	for i in range(0, d):
-		indexValue = indexValue + MBR[i]
+	for i in dims:
+		j = i - 1
+		indexValue = indexValue + MBR[j]
 	return indexValue
 
 #priority queue class to implement priority queue. Here heapq library is used to implement priority queue
@@ -138,20 +122,6 @@ class RTree(object):
 		self.parent = parent
 		self.leaves = []
 
-	#search for the intersection with the minimum bounding rectangle
-	def search(self, MBR):
-		res = []
-		if not self.level == 1 :
-			for leaf in self.leaves:
-				if intersect(MBR, leaf.MBR):
-					res += leaf.Search(MBR)
-			return res
-		else :
-			for leaf in self.leaves:
-				 if intersect(MBR, leaf.MBR):
-				 	res.append(leaf.index)
-			return res
-
 	#fid the leaf node
 	def findLeafNode(self, Node):
 		res = []
@@ -174,14 +144,15 @@ class RTree(object):
 		global comparisons
 		skyline = []
 		for leaf in self.leaves:
-			queue.push(leaf,indexingValue(leaf.MBR))
+			queue.push(leaf,indexingValue(leaf.MBR, dims))
 
 		while queue.empty() != 0:
 			obj = queue.pop()
 			if notDominated(skyline, obj.MBR, dims) :
 				if obj.level > 0 :
 					for leaf in obj.leaves:
-						queue.push(leaf,indexingValue(leaf.MBR))
+						if notDominated(skyline, leaf.MBR, dims):
+							queue.push(leaf,indexingValue(leaf.MBR, dims))
 				else :
 					skyline.append((obj.index, obj.MBR))
 		return skyline, comparisons  
@@ -210,14 +181,17 @@ class RTree(object):
 
 		leafa = RTree(level = self.level, minEle = self.minEle, maxEle = self.maxEle, parent = self.parent)
 		leafb = RTree(level = self.level, minEle = self.minEle, maxEle = self.maxEle, parent = self.parent)
-		self.getSeed(leafa, leafb)
+		#Pick first entry for each group 
+		self.linearpickseeds(leafa, leafb)
 		while len(self.leaves) > 0:
+			#If one group has so few entries that all the rest must be assigned to it m order for it to have the muumum number m, assign them and stop 
 			if len(leafa.leaves) > len(leafb.leaves) and len(leafb.leaves) + len(self.leaves) == self.minEle:
 				for leaf in self.leaves:
 					leafb.MBR = merge(leafb.MBR, leaf.MBR)
 					leafb.leaves.append(leaf)
 					leaf.parent = leafb
 				self.leaves = []
+				##If all entnes have been assigned, stop 
 				break
 			if len(leafb.leaves) > len(leafa.leaves) and len(leafa.leaves) + len(self.leaves) == self.minEle:
 				for leaf in self.leaves:
@@ -225,7 +199,9 @@ class RTree(object):
 					leafa.leaves.append(leaf)
 					leaf.parent = leafa
 				self.leaves = []
+				#If all entnes have been assigned, stop 
 				break
+			# Invoke Algorithm PickNext to choose the next entry to assign 
 			self.pickNext(leafa, leafb)
 
 		self.parent.leaves.remove(self)
@@ -234,42 +210,58 @@ class RTree(object):
 		self.parent.MBR = merge(self.parent.MBR, leafa.MBR)
 		self.parent.MBR = merge(self.parent.MBR, leafb.MBR)
 
+	#linear pick seeds algorithm
+	def linearpickseeds(self, leaf1, leaf2):
+		dimension = len(self.MBR)/2
+		wid_d = 0
+		temp_wid_d = 0
+		wid_i = -1
+		wid_j = -1
 
-	def getSeed(self, leaf1, leaf2):
-		a = 0
-		b1 = 0
-		b2 = 0
+		lower_max = 0
+		lower_max_index = 0
+		upper_min = 10000000
+		upper_min_index = 0
+		for index in range(0, dimension):
+			for i in range(0, len(self.leaves)):
+				if self.leaves[i].MBR[index] > lower_max :
+					lower_max = self.leaves[i].MBR[index]
+					lower_max_index = i
+			for i in range(0, len(self.leaves)):
+				if self.leaves[i].MBR[index+dimension] < upper_min :
+					if not i == lower_max_index :
+						upper_min = self.leaves[i].MBR[index+dimension]
+						upper_min_index = i
+			temp_wid_d = abs(self.leaves[upper_min_index].MBR[index+dimension] - self.leaves[lower_max_index].MBR[index])
+			temp_wid_d = temp_wid_d/(self.MBR[index+dimension] - self.MBR[index])
+			if temp_wid_d > wid_d :
+				wid_d = temp_wid_d
+				wid_i = min(upper_min_index, lower_max_index)
+				wid_j = max(lower_max_index, upper_min_index)
 
-		for i in range(0, len(self.leaves)):
-			for j in range(i+1, len(self.leaves)):
-				newMBR = merge(self.leaves[i].MBR, self.leaves[j].MBR)
-				S_new = getSpace(newMBR)
-				S1 = getSpace(self.leaves[i].MBR)
-				S2 = getSpace(self.leaves[j].MBR)
-				if S_new - S1 - S2 > d:
-					b1 = i
-					b2 = j
-					a = S_new - S1 - S2f
-		n2 = self.leaves.pop(b2)
+		n2 = self.leaves.pop(wid_j)
 		n2.parent = leaf1
 		leaf1.leaves.append(n2)
 		leaf1.MBR = leaf1.leaves[0].MBR
-		n1 = self.leaves.pop(b1)
+		n1 = self.leaves.pop(wid_i)
 		n1.parent = leaf2
 		leaf2.leaves.append(n1)
 		leaf2.MBR = leaf2.leaves[0].MBR
 
-
+	#it will pick next leaf from the pool of leaves
 	def pickNext(self, leaf1, leaf2):
 		d = 0
 		t = 0
 		
 		for i in range(0,len(self.leaves)):
+			#For each entry E not yet m a group, calculate d,= the area increase required in the covermg rectangle of Group 1 to include EI Calculate d2 similarly for Group 2 
 			d1 = increaseVolume(merge(leaf1.MBR, self.leaves[i].MBR), leaf1.MBR)
 			d2 = increaseVolume(merge(leaf2.MBR, self.leaves[i].MBR), leaf2.MBR)
+			#Choose any entry with the maximum difference between d1 and d2
 			if abs(d1 - d2) > abs(d):
 				d = d1 - d2
 				t = i
+		# if d > 0  it means d1 > d2 so choosing leaf2
 		if d > 0:
 			target = self.leaves.pop(t)
 			leaf2.MBR = merge(leaf2.MBR, target.MBR)
@@ -282,13 +274,16 @@ class RTree(object):
 			leaf1.leaves.append(target)
 
 
+	#adjust the tree i.e. if number of nodes is more than maximum allowed value then it splits that node.
 	def AdjustTree(self):
 		p = self
+		#If N is the root, stop 
 		while p != None:
 			if len(p.leaves) > p.maxEle:
 				p.splitNode()
 			else:
 				if p.parent != None:
+					#Adjust covering rectangle in parent entry
 					p.parent.MBR = merge(p.parent.MBR, p.MBR)
 			p = p.parent
 
@@ -298,8 +293,13 @@ def getBlockParametersDimension(queryfile, dims, blocksize):
 	dims = line1.split('\t')
 	dims = map(int, dims)
 	line2 = query.readline().rstrip()
-	blocksize = int (line2)
+	diskpagesize = int(line2)
+	line3 = query.readline().rstrip()
+	line3 = line3.split('\t')
+	pointer_size = int(line3[0])
+	key_size = int(line3[1])
 	query.close()
+	blocksize = int(math.floor(diskpagesize/(pointer_size+key_size)))
 	return dims, blocksize
 
 if __name__ == '__main__':
@@ -313,8 +313,8 @@ if __name__ == '__main__':
 	root = RTree(minEle = blocksize/2, maxEle = blocksize)
 
 	#get input file of objects
-	infilename = 'sample_ind.txt'
-	outfilename = 'output_ind.txt'
+	infilename = 'sample_ant.txt'
+	outfilename = 'output_ant1.txt'
 	inputfile = open(infilename, 'r')
 	n = []
 	for line in inputfile:
@@ -352,3 +352,5 @@ if __name__ == '__main__':
 	outfile.write(str(skyIndex))
 	outfile.write("\n")
 	outfile.close()
+
+#   Reference:: http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf to implement rtree

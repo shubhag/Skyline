@@ -129,8 +129,8 @@ if __name__ == '__main__':
 	queryfile = 'sample_query.txt'
 	#get dimension on which skylines are to be found and memory blocksize 	
 	dims, blocksize = getBlockParametersDimension(queryfile, dims, blocksize)
-	infilename = 'sample_ind.txt'
-	outfilename = 'output_ind.txt'
+	infilename = 'sample_cor.txt'
+	outfilename = 'output_cor.txt'
 	bnl(infilename, dims, blocksize)
 	end_time = time.time()
 
